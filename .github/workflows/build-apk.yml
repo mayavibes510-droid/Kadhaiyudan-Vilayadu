@@ -27,32 +27,10 @@ jobs:
           mkdir build-project
           unzip -o *.zip -d build-project
 
-      - name: Fix Android Java and Kotlin targets
+      - name: Fix Java and Kotlin targets
         run: |
           cd build-project/KathaiVilaiyattu_APK_Build_Project
-
-          python3 - <<'PY'
-          p = "app/build.gradle.kts"
-          s = open(p, encoding="utf-8").read()
-
-          s = s.replace(
-              'android {',
-              '''android {
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-'''
-          )
-
-          open(p, "w", encoding="utf-8").write(s)
-          PY
-
-          cat app/build.gradle.kts
+          python3 -c "p='app/build.gradle.kts';s=open(p).read();s=s.replace('android {','android {\n    compileOptions {\n        sourceCompatibility = JavaVersion.VERSION_17\n        targetCompatibility = JavaVersion.VERSION_17\n    }\n    kotlinOptions {\n        jvmTarget = \"17\"\n    }',1);open(p,'w').write(s)"
 
       - name: Build APK
         run: |

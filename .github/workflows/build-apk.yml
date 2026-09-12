@@ -8,10 +8,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download project
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Java
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -22,27 +22,45 @@ jobs:
         with:
           gradle-version: "8.7"
 
-      - name: Extract project ZIP
+      - name: Extract project
         run: |
           mkdir build-project
           unzip -o *.zip -d build-project
-          cd build-project
-          if [ -d KathaiVilaiyattu_APK_Build_Project ]; then
-            cd KathaiVilaiyattu_APK_Build_Project
-          fi
-          echo "Project files:"
-          ls -la
+
+      - name: Fix Android Java and Kotlin targets
+        run: |
+          cd build-project/KathaiVilaiyattu_APK_Build_Project
+
+          python3 - <<'PY'
+          p = "app/build.gradle.kts"
+          s = open(p, encoding="utf-8").read()
+
+          s = s.replace(
+              'android {',
+              '''android {
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+'''
+          )
+
+          open(p, "w", encoding="utf-8").write(s)
+          PY
+
+          cat app/build.gradle.kts
 
       - name: Build APK
         run: |
-          cd build-project
-          if [ -d KathaiVilaiyattu_APK_Build_Project ]; then
-            cd KathaiVilaiyattu_APK_Build_Project
-          fi
+          cd build-project/KathaiVilaiyattu_APK_Build_Project
           gradle assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Kathai-Vilaiyattu-APK
-          path: build-project/**/app/build/outputs/apk/debug/app-debug.apk
+          path: build-project/KathaiVilaiyattu_APK_Build_Project/app/build/outputs/apk/debug/app-debug.apk
